@@ -1,0 +1,57 @@
+:root {
+  --dashboard-sidebar-width: 250px;
+  --dashboard-topbar-height: 72px;
+}
+
+html {
+  scroll-padding-top: calc(var(--dashboard-topbar-height) + 16px);
+}
+
+.dashboard .sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--dashboard-sidebar-width);
+  z-index: 30;
+}
+
+.dashboard .dashboard-main {
+  margin-left: var(--dashboard-sidebar-width);
+  padding-top: var(--dashboard-topbar-height);
+}
+
+.dashboard .topbar {
+  position: fixed;
+  inset: 0 0 auto var(--dashboard-sidebar-width);
+  height: var(--dashboard-topbar-height);
+  z-index: 40;
+  background: #fff;
+}
+
+.dashboard .nav-label {
+  margin-top: 0;
+  padding-top: 36px;
+  flex-shrink: 0;
+}
+
+.dashboard .sidebar > .brand,
+.dashboard .mobile-drawer > .brand {
+  flex-shrink: 0;
+}
+
+@media (max-width: 1200px) {
+  :root {
+    --dashboard-sidebar-width: 225px;
+  }
+}
+
+@media (max-width: 1000px) {
+  :root {
+    --dashboard-sidebar-width: 0px;
+  }
+}
+
+@media (max-width: 720px) {
+  :root {
+    --dashboard-topbar-height: 64px;
+  }
+}
