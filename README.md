@@ -12,13 +12,35 @@ cp .env.example .env
 npm run dev
 ```
 
-Open http://localhost:3000. Set `NEXT_PUBLIC_API_BASE_URL` in `.env` to your Express backend origin. Do not append `/api/v1`. Both Axios and server-side prefetching use this value; a missing value produces a clear configuration error.
+Open http://localhost:3000. Set `NEXT_PUBLIC_API_BASE_URL` to the frontend origin and `BACKEND_API_URL` to the Express backend origin. Do not append `/api/v1`. Axios and server-side prefetching use the public origin; `next.config.ts` forwards `/api/*` requests to Express.
 
 ```dotenv
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+BACKEND_API_URL=http://localhost:5000
 ```
 
 The backend remains responsible for database migrations, seeding, Better Auth, JWT signing, role authorization, and assignment unlocking. Its API must be running for authenticated pages to load.
+
+## Deploy authentication on Vercel
+
+For the current production domains, set these variables in the **frontend** Vercel project:
+
+```dotenv
+NEXT_PUBLIC_API_BASE_URL=https://submitly-frontend-gamma.vercel.app
+BACKEND_API_URL=https://submitly-backend-sigma.vercel.app
+```
+
+Set these variables in the **backend** Vercel project, alongside its database URLs and signing secrets:
+
+```dotenv
+NODE_ENV=production
+FRONTEND_URL=https://submitly-frontend-gamma.vercel.app
+BETTER_AUTH_URL=https://submitly-frontend-gamma.vercel.app
+```
+
+Leave `COOKIE_DOMAIN` unset. Requests to the frontend's `/api/*` paths are rewritten to Express, so cookies are stored for the frontend host and reach both browser API calls and server guards. `BETTER_AUTH_URL` is the public origin serving Better Auth through this rewrite.
+
+Redeploy both projects after changing these settings, then sign in again from the frontend. Rewrites and `NEXT_PUBLIC_*` values are resolved during the build. The shared `vercel.app` suffix cannot be used as a cookie domain.
 
 ## Workspaces
 
@@ -60,13 +82,13 @@ The service → query hook → component separation follows the reference projec
 
 ## API and authentication contract
 
-Browser services call Express directly using `httpClient.get`, `post`, `put`, `patch`, and `delete`. Each helper returns `response.data`, preserving the backend envelope and pagination metadata. Request options support query parameters, headers, and an abort signal. The frontend has no API routes.
+Browser services use `httpClient.get`, `post`, `put`, `patch`, and `delete`. Each helper returns `response.data`, preserving the backend envelope and pagination metadata. Request options support query parameters, headers, and an abort signal. The `/api/*` rewrite in `next.config.ts` forwards requests to Express; the application API handlers remain in the backend.
 
 Axios uses `withCredentials: true` and a 30-second timeout. Express enables credentialed CORS for its configured `FRONTEND_URL`, which Better Auth also trusts. Configure the backend with `FRONTEND_URL=http://localhost:3000` for local development. Authentication cookies remain HttpOnly, use SameSite=Lax on local HTTP, and use Secure with SameSite=None in production.
 
-Use the same hostname for the frontend and backend locally, such as `localhost:3000` and `localhost:5000`; avoid mixing `localhost` and `127.0.0.1`. Server guards and prefetching need cookies to reach the Next.js host too. For production, use the same host or shared subdomains and set the backend's optional `COOKIE_DOMAIN` to their common parent domain. Unrelated frontend/API domains do not share cookies with the current server guards.
+Use the same hostname for the frontend and backend locally, such as `localhost:3000` and `localhost:5000`; avoid mixing `localhost` and `127.0.0.1`. Route API requests through the frontend origin so its server guards and prefetching receive the same cookies as browser requests. Calling a separate backend `vercel.app` host directly cannot provide cookies to the frontend's server guards.
 
-`NEXT_PUBLIC_*` variables are included in the browser build. Restart development after editing `.env`, and rebuild production when changing the backend URL. Never put secrets in public environment variables.
+`NEXT_PUBLIC_*` variables are included in the browser build. `BACKEND_API_URL` is read by the server configuration when generating rewrites. Restart development after editing `.env`, and rebuild production when changing either API origin. Never put secrets in public environment variables.
 
 Sign-in/signup use the **custom** `/api/v1/auth/signin` and `/api/v1/auth/signup` routes. Logout uses `/api/v1/auth/logout`. The native `/api/auth/get-session` response is handled separately because it returns `{ session, user }` or `null`, without the custom API envelope.
 
