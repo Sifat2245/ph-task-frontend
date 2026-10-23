@@ -9,7 +9,6 @@ import {
   useMySkip,
   useMySubmission,
   useSkipAssignment,
-  useSubmitAssignment,
 } from "@/hooks/use-assignments";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -17,6 +16,7 @@ import { Modal } from "@/components/ui/modal";
 import { ErrorState, InlineError, Skeleton } from "@/components/ui/feedback";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatusBadge } from "@/components/ui/badge";
+import { SubmissionForm } from "@/components/submissions/submission-form";
 import { StudentSubmissionResult } from "@/components/submissions/student-submission-result";
 import { formatDate } from "@/lib/format";
 import { useToast } from "@/components/ui/toast";
@@ -35,12 +35,9 @@ export function AssignmentDetail({ id }: { id: string }) {
     id,
     isStudent && assignment?.progressState === "SKIPPED",
   );
-  const submit = useSubmitAssignment();
   const skipMutation = useSkipAssignment();
   const [skipOpen, setSkipOpen] = useState(false);
   const [isResubmitting, setIsResubmitting] = useState(false);
-  const [items, setItems] = useState("");
-  const [note, setNote] = useState("");
   const toast = useToast();
   if (query.isPending) return <DetailPageSkeleton />;
   if (query.error || !assignment)
@@ -60,12 +57,7 @@ export function AssignmentDetail({ id }: { id: string }) {
         .filter((item) => item.assignmentNumber > assignment.assignmentNumber)
         .sort((a, b) => a.assignmentNumber - b.assignmentNumber)[0] ?? null)
     : undefined;
-  const startResubmission = () => {
-    setItems(latestRevision?.submissionItems ?? "");
-    setNote(latestRevision?.note ?? "");
-    submit.reset();
-    setIsResubmitting(true);
-  };
+  const startResubmission = () => setIsResubmitting(true);
   return (
     <div className="page-stack">
       <Link className="back-link" href="/dashboard/assignments">
@@ -134,89 +126,27 @@ export function AssignmentDetail({ id }: { id: string }) {
                       <p>
                         {hasSubmission
                           ? "Update your work and submit it for another review."
-                          : "Add your submission items and a note for your reviewer."}
+                          : "Share your project name, repository, live link, and description."}
                       </p>
                     </div>
                     <Icon name="send" size={20} />
                   </div>
-                  <form
-                    className="panel-body form-stack"
-                    onSubmit={async (event) => {
-                      event.preventDefault();
-                      try {
-                        await submit.mutateAsync({
-                          assignmentId: id,
-                          submissionItems: items.trim(),
-                          note: note.trim(),
-                        });
-                        setIsResubmitting(false);
-                        toast("Assignment submitted. Keep that momentum!");
-                      } catch {
-                        /* Inline error below. */
-                      }
+                  <SubmissionForm
+                    assignmentId={id}
+                    initialRevision={hasSubmission ? latestRevision : undefined}
+                    onSubmitted={() => {
+                      setIsResubmitting(false);
+                      toast("Assignment submitted. Keep that momentum!");
                     }}
-                  >
-                    <label className="field">
-                      Submission items
-                      <textarea
-                        name="submissionItems"
-                        placeholder="Share your project links, repository, live URL, or other submission details…"
-                        required
-                        value={items}
-                        onChange={(e) => setItems(e.target.value)}
-                        disabled={submit.isPending}
-                        rows={4}
-                      />
-                      <small>
-                        Paste your links or submission details as plain text.
-                      </small>
-                    </label>
-                    <label className="field">
-                      Note to your reviewer
-                      <textarea
-                        name="note"
-                        placeholder="What did you build? Anything your reviewer should know?"
-                        required
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        disabled={submit.isPending}
-                        rows={3}
-                      />
-                    </label>
-                    <InlineError message={submit.error?.message} />
-                    <div className="form-actions">
-                      {hasSubmission && (
-                        <Button
-                          variant="secondary"
-                          disabled={submit.isPending}
-                          onClick={() => setIsResubmitting(false)}
-                        >
-                          Cancel
-                        </Button>
-                      )}
-                      {!assignment.progressState && (
-                        <Button
-                          variant="secondary"
-                          onClick={() => setSkipOpen(true)}
-                          disabled={submit.isPending}
-                        >
-                          <Icon name="skip" size={16} />
-                          Skip assignment
-                        </Button>
-                      )}
-                      <Button
-                        type="submit"
-                        disabled={!items.trim() || !note.trim()}
-                        loading={submit.isPending}
-                        loadingText="Submitting…"
-                      >
-                        <Icon name="send" size={16} />
-                        {hasSubmission
-                          ? "Resubmit assignment"
-                          : "Submit assignment"}
-                      </Button>
-                    </div>
-                  </form>
+                    onCancel={
+                      hasSubmission ? () => setIsResubmitting(false) : undefined
+                    }
+                    onSkip={
+                      !assignment.progressState
+                        ? () => setSkipOpen(true)
+                        : undefined
+                    }
+                  />
                 </section>
               )}
               {assignment.progressState === "SKIPPED" && (

@@ -1,7 +1,7 @@
 "use client";
 import { DetailPageSkeleton } from "@/components/ui/page-skeletons";
 import Link from "next/link";
-import { useStudent, useSubmissionIndex } from "@/hooks/use-staff";
+import { useStudent, useStudentSubmissions } from "@/hooks/use-staff";
 import { useAssignments } from "@/hooks/use-assignments";
 import { PageHeading } from "@/components/ui/page-heading";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/feedback";
@@ -12,14 +12,13 @@ import { formatDate } from "@/lib/format";
 
 export function StudentProfile({ id }: { id: string }) {
   const query = useStudent(id);
-  const index = useSubmissionIndex();
+  const index = useStudentSubmissions(id);
   const assignments = useAssignments();
   if (query.isPending) return <DetailPageSkeleton />;
   if (query.error || !query.data)
     return <ErrorState error={query.error} retry={() => query.refetch()} />;
   const student = query.data.data;
-  const submissions =
-    index.data?.filter((row) => row.studentId === student.id) ?? [];
+  const submissions = index.data ?? [];
   return (
     <div className="page-stack">
       <Link className="back-link" href="/dashboard/students">

@@ -4,13 +4,24 @@ import type {
   ReviewDetail,
   ReviewPayload,
   StaffSubmission,
+  SubmissionFilters,
+  SubmissionStats,
 } from "@/types";
 
 export const reviewService = {
-  submissions: (page = 1, limit = 10, signal?: AbortSignal) =>
+  submissions: (
+    page = 1,
+    limit = 10,
+    filters: SubmissionFilters = {},
+    signal?: AbortSignal,
+  ) =>
     httpClient.get<ApiResponse<StaffSubmission[]>>(
       "/api/v1/assignment-review/get-all-submissions",
-      { params: { page, limit }, signal },
+      { params: { page, limit, ...filters }, signal },
+    ),
+  stats: () =>
+    httpClient.get<ApiResponse<SubmissionStats>>(
+      "/api/v1/assignment-review/get-submission-stats",
     ),
   submission: (id: string) =>
     httpClient.get<ApiResponse<StaffSubmission>>(
@@ -39,15 +50,18 @@ export const reviewService = {
     ),
 };
 
-// The backend supports pagination, but no search, status filters, or summary API.
-// Read its real pages for cross-page filtering and accurate dashboard counts.
-export async function getSubmissionIndex(
+// A student's journey needs all of their submissions, fetched in bounded pages.
+export async function getStudentSubmissions(
+  studentId: string,
   signal?: AbortSignal,
 ): Promise<StaffSubmission[]> {
-  const first = await reviewService.submissions(1, 100, signal);
+  const filters = { studentId };
+  const first = await reviewService.submissions(1, 100, filters, signal);
   const rows = [...first.data];
   for (let page = 2; page <= (first.meta?.totalPages ?? 1); page++) {
-    rows.push(...(await reviewService.submissions(page, 100, signal)).data);
+    rows.push(
+      ...(await reviewService.submissions(page, 100, filters, signal)).data,
+    );
   }
   return Array.from(new Map(rows.map((row) => [row.id, row])).values());
 }

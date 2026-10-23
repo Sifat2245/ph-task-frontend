@@ -88,11 +88,17 @@ export interface Review {
   mentor?: { id: string; name: string };
 }
 
-export interface Revision {
+export interface ProjectDetails {
+  projectName: string;
+  repoUrl: string;
+  liveLink: string;
+  description: string;
+}
+
+export interface Revision extends ProjectDetails {
   id: string;
   submissionId: string;
   version: number;
-  submissionItems: string;
   note: string;
   submittedAt: string;
   reviews: Review[];
@@ -136,10 +142,22 @@ export interface Progress {
   updatedAt: string;
 }
 
-export interface SubmitPayload {
+export interface SubmitPayload extends ProjectDetails {
   assignmentId: string;
-  submissionItems: string;
-  note: string;
+  note?: string;
+}
+
+export interface SubmissionFilters {
+  searchTerm?: string;
+  assignmentId?: string;
+  status?: SubmissionStatus;
+  studentId?: string;
+}
+
+export interface SubmissionStats {
+  total: number;
+  pending: number;
+  reviewed: number;
 }
 
 export interface SubmitResult {

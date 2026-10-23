@@ -5,7 +5,7 @@ import { useState, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Modal } from "@/components/ui/modal";
-import { SubmissionItems } from "./revision-history";
+import { ProjectDetails } from "./project-details";
 import { formatDate } from "@/lib/format";
 import type { Assignment, Revision } from "@/types";
 import "./student-submission-result.css";
@@ -132,14 +132,7 @@ export function StudentSubmissionResult({
         >
           {dialog === "submission" ? (
             <div className="form-stack">
-              <div>
-                <p className="content-label">Submission items</p>
-                <SubmissionItems text={revision.submissionItems} />
-              </div>
-              <div>
-                <p className="content-label">Note to your reviewer</p>
-                <p className="submission-text">{revision.note}</p>
-              </div>
+              <ProjectDetails project={revision} />
               <p className="table-secondary">
                 Submitted {formatDate(revision.submittedAt, true)} UTC
               </p>

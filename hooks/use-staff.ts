@@ -7,21 +7,31 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { keys } from "@/lib/query-keys";
-import { getSubmissionIndex, reviewService } from "@/services/review.service";
+import {
+  getStudentSubmissions,
+  reviewService,
+} from "@/services/review.service";
 import { peopleService } from "@/services/people.service";
+import type { SubmissionFilters } from "@/types";
 
-export const useSubmissions = (page = 1, limit = 10, enabled = true) =>
+export const useSubmissions = (
+  page = 1,
+  limit = 10,
+  filters: SubmissionFilters = {},
+) =>
   useQuery({
-    queryKey: keys.submissionPage(page, limit),
-    queryFn: ({ signal }) => reviewService.submissions(page, limit, signal),
+    queryKey: keys.submissionPage(page, limit, filters),
+    queryFn: ({ signal }) =>
+      reviewService.submissions(page, limit, filters, signal),
     placeholderData: keepPreviousData,
-    enabled,
   });
-export const useSubmissionIndex = (enabled = true) =>
+export const useSubmissionStats = () =>
+  useQuery({ queryKey: keys.submissionStats, queryFn: reviewService.stats });
+export const useStudentSubmissions = (studentId: string) =>
   useQuery({
-    queryKey: keys.submissionIndex,
-    queryFn: ({ signal }) => getSubmissionIndex(signal),
-    enabled,
+    queryKey: keys.studentSubmissions(studentId),
+    queryFn: ({ signal }) => getStudentSubmissions(studentId, signal),
+    enabled: !!studentId,
   });
 export const useSubmission = (id: string) =>
   useQuery({

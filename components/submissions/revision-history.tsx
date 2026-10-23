@@ -1,30 +1,7 @@
+import { ProjectDetails } from "@/components/submissions/project-details";
 import { formatDate } from "@/lib/format";
 import { Icon } from "@/components/ui/icon";
 import type { Revision } from "@/types";
-
-export function SubmissionItems({ text }: { text: string }) {
-  // The API accepts plain text; render safe HTTP(S) links without interpreting HTML.
-  return (
-    <p className="submission-text">
-      {text.split(/(https?:\/\/[^\s<>]+)/g).map((part, index) =>
-        /^https?:\/\//.test(part) ? (
-          <a
-            className="text-link break-all"
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-            key={index}
-          >
-            {part}
-            <Icon name="external" size={12} />
-          </a>
-        ) : (
-          part
-        ),
-      )}
-    </p>
-  );
-}
 
 export function RevisionHistory({
   revisions,
@@ -52,14 +29,7 @@ export function RevisionHistory({
             </time>
           </header>
           <div className="revision-content">
-            <div>
-              <p className="content-label">Submission items</p>
-              <SubmissionItems text={revision.submissionItems} />
-            </div>
-            <div>
-              <p className="content-label">Student note</p>
-              <p className="submission-text">{revision.note}</p>
-            </div>
+            <ProjectDetails project={revision} />
             {revision.reviews.length > 0 ? (
               revision.reviews.map((review) => (
                 <div key={review.id} className="feedback-card">

@@ -1,3 +1,5 @@
+import type { SubmissionFilters } from "@/types";
+
 export const keys = {
   me: ["auth", "me"] as const,
   assignments: ["assignments"] as const,
@@ -5,9 +7,13 @@ export const keys = {
   mySubmission: (id: string) => ["my-submission", id] as const,
   mySkip: (id: string) => ["my-skip", id] as const,
   submissions: ["submissions"] as const,
-  submissionPage: (page: number, limit: number) =>
-    ["submissions", "page", page, limit] as const,
-  submissionIndex: ["submissions", "index"] as const,
+  submissionPage: (
+    page: number,
+    limit: number,
+    filters: SubmissionFilters = {},
+  ) => ["submissions", "page", page, limit, filters] as const,
+  submissionStats: ["submissions", "stats"] as const,
+  studentSubmissions: (id: string) => ["submissions", "student", id] as const,
   submission: (id: string) => ["submissions", "detail", id] as const,
   reviews: ["reviews"] as const,
   review: (id: string) => ["reviews", id] as const,

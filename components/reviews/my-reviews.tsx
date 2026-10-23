@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Icon } from "@/components/ui/icon";
 import { ReviewForm } from "./review-form";
-import { SubmissionItems } from "@/components/submissions/revision-history";
+import { ProjectDetails } from "@/components/submissions/project-details";
 import { formatDate } from "@/lib/format";
 
 function EditReview({ id, onClose }: { id: string; onClose: () => void }) {
@@ -37,7 +37,7 @@ function EditReview({ id, onClose }: { id: string; onClose: () => void }) {
           <div className="form-stack">
             <div className="guidance">
               <Icon name="submissions" size={18} />
-              <SubmissionItems text={review.revision.submissionItems} />
+              <ProjectDetails project={review.revision} />
             </div>
             <ReviewForm
               revisionId={review.revisionId}

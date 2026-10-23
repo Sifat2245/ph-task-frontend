@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAssignments } from "@/hooks/use-assignments";
-import { useSubmissionIndex, useSubmissions } from "@/hooks/use-staff";
+import { useSubmissions } from "@/hooks/use-staff";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { keys } from "@/lib/query-keys";
 import { reviewService } from "@/services/review.service";
 import { formatDate } from "@/lib/format";
@@ -12,7 +13,11 @@ import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/badge";
 import { Pagination } from "@/components/ui/pagination";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/feedback";
-import type { StaffSubmission } from "@/types";
+import type {
+  StaffSubmission,
+  SubmissionFilters,
+  SubmissionStatus,
+} from "@/types";
 
 export function SubmissionsTable({ rows }: { rows: StaffSubmission[] }) {
   const client = useQueryClient();
@@ -131,44 +136,38 @@ export function SubmissionList() {
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
   const [assignment, setAssignment] = useState("");
-  const [status, setStatus] = useState("");
-  const filtering = !!(search.trim() || assignment || status);
-  const query = useSubmissions(page, limit, !filtering);
-  const index = useSubmissionIndex(filtering);
+  const [status, setStatus] = useState<SubmissionStatus | "">("");
+  const searchTerm = useDebouncedValue(search.trim());
+  const filters = useMemo<SubmissionFilters>(
+    () => ({
+      ...(searchTerm ? { searchTerm } : {}),
+      ...(assignment ? { assignmentId: assignment } : {}),
+      ...(status ? { status } : {}),
+    }),
+    [searchTerm, assignment, status],
+  );
+  const filtering = !!(searchTerm || assignment || status);
+  const query = useSubmissions(page, limit, filters);
   const assignments = useAssignments();
   const client = useQueryClient();
   useEffect(() => {
-    if (!filtering && query.data?.meta && page < query.data.meta.totalPages) {
+    if (
+      !query.isPlaceholderData &&
+      query.data?.meta &&
+      page < query.data.meta.totalPages
+    ) {
       void client.prefetchQuery({
-        queryKey: keys.submissionPage(page + 1, limit),
+        queryKey: keys.submissionPage(page + 1, limit, filters),
         queryFn: ({ signal }) =>
-          reviewService.submissions(page + 1, limit, signal),
+          reviewService.submissions(page + 1, limit, filters, signal),
       });
     }
-  }, [page, limit, filtering, query.data, client]);
-  const filtered = (index.data ?? []).filter(
-    (row) =>
-      (!search.trim() ||
-        `${row.student.user.studentId} ${row.student.user.name}`
-          .toLowerCase()
-          .includes(search.trim().toLowerCase())) &&
-      (!assignment || row.assignmentId === assignment) &&
-      (!status || row.status === status),
-  );
-  const rows = filtering
-    ? filtered.slice((page - 1) * limit, page * limit)
-    : (query.data?.data ?? []);
-  const meta = filtering
-    ? {
-        page,
-        limit,
-        total: filtered.length,
-        totalPages: Math.ceil(filtered.length / limit),
-      }
-    : query.data?.meta;
-  const loading = filtering ? index.isPending : query.isPending;
-  const error = filtering ? index.error : query.error;
-  const busy = filtering ? index.isFetching : query.isFetching;
+  }, [page, limit, filters, query.data, query.isPlaceholderData, client]);
+  const rows = query.data?.data ?? [];
+  const meta = query.data?.meta;
+  const loading = query.isPending;
+  const error = query.error;
+  const busy = query.isFetching || search.trim() !== searchTerm;
   return (
     <section className="panel">
       <div className="panel-heading">
@@ -186,6 +185,7 @@ export function SubmissionList() {
           <input
             aria-label="Search by student ID or name"
             placeholder="Search student ID or name…"
+            maxLength={100}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -212,7 +212,7 @@ export function SubmissionList() {
           aria-label="Filter by status"
           value={status}
           onChange={(e) => {
-            setStatus(e.target.value);
+            setStatus(e.target.value as SubmissionStatus | "");
             setPage(1);
           }}
         >
@@ -236,10 +236,7 @@ export function SubmissionList() {
         </div>
       ) : error ? (
         <div className="p-5">
-          <ErrorState
-            error={error}
-            retry={() => (filtering ? index.refetch() : query.refetch())}
-          />
+          <ErrorState error={error} retry={() => query.refetch()} />
         </div>
       ) : rows.length ? (
         <SubmissionsTable rows={rows} />

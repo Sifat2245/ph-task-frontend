@@ -1,11 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-guard";
-import {
-  useStudents,
-  useSubmissionIndex,
-  useSubmissions,
-} from "@/hooks/use-staff";
+import { useStudents, useSubmissionStats } from "@/hooks/use-staff";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
 import { ErrorState } from "@/components/ui/feedback";
@@ -14,8 +10,7 @@ import { SubmissionList } from "@/components/submissions/submission-list";
 
 export function StaffOverview() {
   const user = useAuth();
-  const index = useSubmissionIndex();
-  const submissions = useSubmissions();
+  const stats = useSubmissionStats();
   const students = useStudents(1, 1);
   return (
     <div className="page-stack">
@@ -47,30 +42,26 @@ export function StaffOverview() {
       <div className="stat-grid">
         <StatCard
           label="Total submissions"
-          value={submissions.data?.meta?.total ?? "—"}
+          value={stats.data?.data.total ?? "—"}
           caption="Work shared by students"
           icon="submissions"
-          loading={submissions.isPending}
+          loading={stats.isPending}
         />
         <StatCard
           label="Pending review"
-          value={
-            index.data?.filter((row) => row.status === "PENDING").length ?? "—"
-          }
+          value={stats.data?.data.pending ?? "—"}
           caption="Ready for a fresh perspective"
           icon="clock"
           tone="amber"
-          loading={index.isPending}
+          loading={stats.isPending}
         />
         <StatCard
           label="Reviewed"
-          value={
-            index.data?.filter((row) => row.status === "REVIEWED").length ?? "—"
-          }
+          value={stats.data?.data.reviewed ?? "—"}
           caption="Feedback shared, progress made"
           icon="reviews"
           tone="green"
-          loading={index.isPending}
+          loading={stats.isPending}
         />
         <StatCard
           label="Total students"
@@ -81,8 +72,8 @@ export function StaffOverview() {
           loading={students.isPending}
         />
       </div>
-      {index.error && (
-        <ErrorState error={index.error} retry={() => index.refetch()} />
+      {stats.error && (
+        <ErrorState error={stats.error} retry={() => stats.refetch()} />
       )}
       {students.error && (
         <ErrorState error={students.error} retry={() => students.refetch()} />

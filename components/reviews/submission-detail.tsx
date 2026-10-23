@@ -1,4 +1,5 @@
 "use client";
+import { ProjectDetails } from "@/components/submissions/project-details";
 import { DetailPageSkeleton } from "@/components/ui/page-skeletons";
 import Link from "next/link";
 import { useState } from "react";
@@ -8,10 +9,7 @@ import { ErrorState } from "@/components/ui/feedback";
 import { Icon } from "@/components/ui/icon";
 import { StatusBadge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
-import {
-  RevisionHistory,
-  SubmissionItems,
-} from "@/components/submissions/revision-history";
+import { RevisionHistory } from "@/components/submissions/revision-history";
 import { SubmissionReview } from "./submission-review";
 import { formatDate } from "@/lib/format";
 
@@ -89,14 +87,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                 </select>
               </div>
               <div className="panel-body form-stack">
-                <div>
-                  <p className="content-label">Submission items</p>
-                  <SubmissionItems text={revision.submissionItems} />
-                </div>
-                <div>
-                  <p className="content-label">Student note</p>
-                  <p className="submission-text">{revision.note}</p>
-                </div>
+                <ProjectDetails project={revision} />
               </div>
             </section>
           )}

@@ -15,6 +15,10 @@ export default async function DashboardPage() {
           path: "/api/v1/assignment-review/get-all-submissions?page=1&limit=10",
         },
         {
+          key: keys.submissionStats,
+          path: "/api/v1/assignment-review/get-submission-stats",
+        },
+        {
           key: keys.studentPage(1, 1),
           path: "/api/v1/student/get-all-students?page=1&limit=1",
         },
