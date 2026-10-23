@@ -101,7 +101,7 @@ npm run build
 npm start
 ```
 
-Production artifacts use `.next-production` so a concurrent development server cannot replace a running production preview’s build files.
+Production builds use Next.js’s default `.next` directory. On Vercel, select the **Next.js** framework preset and leave the **Output Directory** override disabled. Run development and production previews in separate checkouts when both need to run at the same time.
 
 The interface includes keyboard-accessible native dialogs with focus trapping and Escape dismissal, required field validation, busy states, inline errors, toast feedback, loading skeletons, empty states, responsive navigation, mobile record cards, and reduced-motion support.
 
