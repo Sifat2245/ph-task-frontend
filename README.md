@@ -128,3 +128,4 @@ Production builds use Next.js’s default `.next` directory. On Vercel, select t
 The interface includes keyboard-accessible native dialogs with focus trapping and Escape dismissal, required field validation, busy states, inline errors, toast feedback, loading skeletons, empty states, responsive navigation, mobile record cards, and reduced-motion support.
 
 Local verification covered the production build, ESLint, TypeScript, and Chrome flows against the real Express services backed by disposable PostgreSQL data: student signup/sign-in, cookie authentication/logout, submit/resubmit/skip and unlocking, review creation/editing, role restrictions, student pagination, mentor CRUD, and assignment CRUD. Keyboard handlers were exercised with DOM keyboard events because native key injection was unavailable in the local headless browser.
+
